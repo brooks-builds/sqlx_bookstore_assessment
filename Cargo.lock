@@ -1290,6 +1290,12 @@ dependencies = [
 [[package]]
 name = "sqlx_bookstore_assessment"
 version = "0.1.0"
+dependencies = [
+ "dotenvy",
+ "eyre",
+ "sqlx",
+ "tokio",
+]
 
 [[package]]
 name = "stringprep"

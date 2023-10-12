@@ -5,7 +5,7 @@ use rand::{
 };
 use sqlx::{pool::PoolOptions, ConnectOptions, Pool, Postgres};
 use sqlx_bookstore_assessment::{
-    books::{create_book, get_all_books, get_one_book, update_book},
+    books::{create_book, delete_book, get_all_books, get_one_book, update_book},
     connect,
 };
 
@@ -91,6 +91,21 @@ async fn should_update_book(pool: Pool<Postgres>) -> Result<()> {
 
     assert_eq!(book.book_id, updated_book.book_id);
     assert_eq!(book.name, updated_book.name);
+
+    Ok(())
+}
+
+#[sqlx::test]
+async fn should_delete_book(pool: Pool<Postgres>) -> Result<()> {
+    seeds::run(pool.clone()).await?;
+
+    delete_book(&pool, 1).await?;
+
+    let result = sqlx::query!("SELECT COUNT(*) FROM books;")
+        .fetch_one(&pool)
+        .await?;
+
+    assert_eq!(result.count, Some(5));
 
     Ok(())
 }

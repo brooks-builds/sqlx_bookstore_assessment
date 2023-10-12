@@ -40,6 +40,14 @@ pub async fn update_book(pool: &Pool<Postgres>, name: &str, book_id: BookId) -> 
     Ok(())
 }
 
+pub async fn delete_book(pool: &Pool<Postgres>, book_id: BookId) -> Result<()> {
+    sqlx::query!("DELETE FROM books WHERE book_id = $1;", book_id)
+        .execute(pool)
+        .await?;
+
+    Ok(())
+}
+
 pub struct Book {
     pub book_id: BookId,
     pub name: String,

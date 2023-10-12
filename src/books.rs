@@ -14,10 +14,10 @@ pub async fn create_book(pool: &Pool<Postgres>, name: &str) -> Result<BookId> {
     Ok(result.book_id)
 }
 
-pub async fn get_one_book(pool: &Pool<Postgres>, book_id: BookId) -> Result<Book> {
+pub async fn get_book_by_id(pool: &Pool<Postgres>, book_id: BookId) -> Result<Option<Book>> {
     Ok(
         sqlx::query_as!(Book, "SELECT * FROM books WHERE book_id = $1", book_id)
-            .fetch_one(pool)
+            .fetch_optional(pool)
             .await?,
     )
 }

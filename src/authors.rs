@@ -14,9 +14,9 @@ pub async fn create_author(pool: &Pool<Postgres>, name: &str) -> Result<AuthorId
     Ok(result.author_id)
 }
 
-pub async fn get_author_by_id(pool: &Pool<Postgres>, id: i32) -> Result<Author> {
+pub async fn get_author_by_id(pool: &Pool<Postgres>, id: i32) -> Result<Option<Author>> {
     let author = sqlx::query_as!(Author, "SELECT * FROM authors WHERE author_id = $1", id)
-        .fetch_one(pool)
+        .fetch_optional(pool)
         .await?;
 
     Ok(author)
@@ -38,6 +38,14 @@ pub async fn update_author(pool: &Pool<Postgres>, id: i32, name: &str) -> Result
     )
     .execute(pool)
     .await?;
+
+    Ok(())
+}
+
+pub async fn delete_author(pool: &Pool<Postgres>, id: i32) -> Result<()> {
+    sqlx::query!("DELETE FROM authors WHERE author_id = $1", id)
+        .execute(pool)
+        .await?;
 
     Ok(())
 }

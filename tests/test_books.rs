@@ -6,8 +6,8 @@ use rand::{
 use sqlx::{pool::PoolOptions, ConnectOptions, Pool, Postgres};
 use sqlx_bookstore_assessment::{
     books::{
-        create_book, create_book_and_author, delete_book, get_all_books, get_book_by_id,
-        update_book,
+        create_book, create_book_and_author, delete_book, get_all_books,
+        get_all_books_with_authors, get_book_by_id, update_book,
     },
     connect,
 };
@@ -146,32 +146,92 @@ async fn should_create_book_and_author_together(pool: Pool<Postgres>) -> Result<
     Ok(())
 }
 
-fn create_test_books() -> Vec<TestBook> {
+#[sqlx::test]
+async fn should_get_all_books_and_their_authors(pool: Pool<Postgres>) -> Result<()> {
+    seeds::run(pool.clone()).await?;
+
+    let books = get_all_books_with_authors(&pool).await?;
+    let test_books = create_test_books();
+
+    assert_eq!(books.len(), test_books.len());
+
+    for test_book in test_books {
+        let book = books.get(&test_book.book_id).unwrap();
+
+        assert_eq!(book.book_id, test_book.book_id);
+        assert_eq!(book.name, test_book.name);
+        assert_eq!(book.authors.len(), test_book.authors.len());
+
+        for test_author in test_book.authors {
+            let author = book
+                .authors
+                .iter()
+                .find(|author| author.author_id == test_author.author_id)
+                .unwrap();
+
+            assert_eq!(test_author.name, author.name);
+        }
+    }
+
+    Ok(())
+}
+
+fn create_test_books() -> Vec<TestBookWithAuthors> {
     vec![
-        TestBook {
+        TestBookWithAuthors {
             book_id: 1,
             name: "Brave New World".to_owned(),
+            authors: vec![Author {
+                author_id: 1,
+                name: "Aldous Huxley".to_owned(),
+            }],
         },
-        TestBook {
+        TestBookWithAuthors {
             book_id: 2,
             name: "Moby Dick".to_owned(),
+            authors: vec![Author {
+                author_id: 2,
+                name: "Herman Melville".to_owned(),
+            }],
         },
-        TestBook {
+        TestBookWithAuthors {
             book_id: 3,
             name: "Omoo".to_owned(),
+            authors: vec![Author {
+                author_id: 2,
+                name: "Herman Melville".to_owned(),
+            }],
         },
-        TestBook {
+        TestBookWithAuthors {
             book_id: 4,
             name: "Rip Van Winkle".to_owned(),
+            authors: vec![Author {
+                author_id: 3,
+                name: "Washington Irving".to_owned(),
+            }],
         },
-        TestBook {
+        TestBookWithAuthors {
             book_id: 5,
             name: "The Raven and Other Poems".to_owned(),
+            authors: vec![Author {
+                author_id: 4,
+                name: "Edgar Allan Poe".to_owned(),
+            }],
         },
-        TestBook {
+        TestBookWithAuthors {
             book_id: 6,
             name: "Mastering the Art of Programming: A Comprehensive Guide for Beginners"
                 .to_owned(),
+            authors: vec![
+                Author {
+                    author_id: 5,
+                    name: "Alistair Thompson".to_owned(),
+                },
+                Author {
+                    author_id: 6,
+                    name: "Emily Sinclair".to_owned(),
+                },
+            ],
         },
     ]
 }
@@ -181,9 +241,20 @@ struct TestBook {
     name: String,
 }
 
+struct TestBookWithAuthors {
+    book_id: i32,
+    name: String,
+    authors: Vec<Author>,
+}
+
 struct TestBookAuthor {
     book_id: i32,
     author_id: i32,
     book_name: String,
     author_name: String,
+}
+
+struct Author {
+    pub author_id: i32,
+    pub name: String,
 }

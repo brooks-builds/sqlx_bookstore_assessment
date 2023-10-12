@@ -28,6 +28,18 @@ pub async fn get_all_books(pool: &Pool<Postgres>) -> Result<Vec<Book>> {
         .await?)
 }
 
+pub async fn update_book(pool: &Pool<Postgres>, name: &str, book_id: BookId) -> Result<()> {
+    sqlx::query!(
+        "UPDATE books SET name = $1 WHERE book_id = $2",
+        name,
+        book_id
+    )
+    .execute(pool)
+    .await?;
+
+    Ok(())
+}
+
 pub struct Book {
     pub book_id: BookId,
     pub name: String,

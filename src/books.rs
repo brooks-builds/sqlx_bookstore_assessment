@@ -13,3 +13,22 @@ pub async fn create_book(pool: &Pool<Postgres>, name: &str) -> Result<BookId> {
 
     Ok(result.book_id)
 }
+
+pub async fn get_one_book(pool: &Pool<Postgres>, book_id: BookId) -> Result<Book> {
+    Ok(
+        sqlx::query_as!(Book, "SELECT * FROM books WHERE book_id = $1", book_id)
+            .fetch_one(pool)
+            .await?,
+    )
+}
+
+pub async fn get_all_books(pool: &Pool<Postgres>) -> Result<Vec<Book>> {
+    Ok(sqlx::query_as!(Book, "SELECT * FROM books")
+        .fetch_all(pool)
+        .await?)
+}
+
+pub struct Book {
+    pub book_id: BookId,
+    pub name: String,
+}

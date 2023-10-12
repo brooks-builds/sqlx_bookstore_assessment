@@ -1294,6 +1294,7 @@ dependencies = [
  "dotenvy",
  "eyre",
  "rand",
+ "seeds",
  "sqlx",
  "tokio",
 ]

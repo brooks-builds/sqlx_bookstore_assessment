@@ -8,8 +8,9 @@ edition = "2021"
 [dependencies]
 dotenvy = "0.15.7"
 eyre = "0.6.8"
-sqlx = { version = "0.7.2", features = ["postgres", "runtime-tokio-rustls"] }
+sqlx = { version = "0.7.2", features = ["postgres", "runtime-tokio-rustls", "migrate"] }
 tokio = { version = "1.33.0", features = ["macros", "rt-multi-thread"] }
+seeds = { path = "./seeds" }
 
 [workspace]
 members = [

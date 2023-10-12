@@ -4,7 +4,7 @@ use rand::{
     thread_rng,
 };
 use sqlx::{Pool, Postgres};
-use sqlx_bookstore_assessment::authors::{create_author, get_author_by_id};
+use sqlx_bookstore_assessment::authors::{create_author, get_all_authors, get_author_by_id};
 
 #[sqlx::test]
 async fn should_create_author(pool: Pool<Postgres>) -> Result<()> {
@@ -37,7 +37,53 @@ async fn should_get_one_author(pool: Pool<Postgres>) -> Result<()> {
     Ok(())
 }
 
+#[sqlx::test]
+async fn should_get_all_authors(pool: Pool<Postgres>) -> Result<()> {
+    seeds::run(pool.clone()).await?;
+
+    let authors = get_all_authors(&pool).await?;
+    let test_authors = create_test_authors();
+
+    assert_eq!(authors.len(), test_authors.len());
+
+    for (index, author) in authors.into_iter().enumerate() {
+        assert_eq!(author.author_id, test_authors[index].author_id);
+        assert_eq!(author.name, test_authors[index].name);
+    }
+
+    Ok(())
+}
+
 struct TestAuthor {
-    author_id: i32,
-    name: String,
+    pub author_id: i32,
+    pub name: String,
+}
+
+fn create_test_authors() -> Vec<TestAuthor> {
+    vec![
+        TestAuthor {
+            author_id: 1,
+            name: "Aldous Huxley".to_owned(),
+        },
+        TestAuthor {
+            author_id: 2,
+            name: "Herman Melville".to_owned(),
+        },
+        TestAuthor {
+            author_id: 3,
+            name: "Washington Irving".to_owned(),
+        },
+        TestAuthor {
+            author_id: 4,
+            name: "Edgar Allan Poe".to_owned(),
+        },
+        TestAuthor {
+            author_id: 5,
+            name: "Alistair Thompson".to_owned(),
+        },
+        TestAuthor {
+            author_id: 6,
+            name: "Emily Sinclair".to_owned(),
+        },
+    ]
 }

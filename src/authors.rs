@@ -22,6 +22,14 @@ pub async fn get_author_by_id(pool: &Pool<Postgres>, id: i32) -> Result<Author> 
     Ok(author)
 }
 
+pub async fn get_all_authors(pool: &Pool<Postgres>) -> Result<Vec<Author>> {
+    let authors = sqlx::query_as!(Author, "SELECT * FROM authors")
+        .fetch_all(pool)
+        .await?;
+
+    Ok(authors)
+}
+
 pub struct Author {
     pub author_id: AuthorId,
     pub name: String,

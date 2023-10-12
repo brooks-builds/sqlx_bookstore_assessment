@@ -30,6 +30,18 @@ pub async fn get_all_authors(pool: &Pool<Postgres>) -> Result<Vec<Author>> {
     Ok(authors)
 }
 
+pub async fn update_author(pool: &Pool<Postgres>, id: i32, name: &str) -> Result<()> {
+    sqlx::query!(
+        "UPDATE authors SET name = $1 WHERE author_id = $2",
+        name,
+        id
+    )
+    .execute(pool)
+    .await?;
+
+    Ok(())
+}
+
 pub struct Author {
     pub author_id: AuthorId,
     pub name: String,

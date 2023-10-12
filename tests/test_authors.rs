@@ -4,7 +4,9 @@ use rand::{
     thread_rng,
 };
 use sqlx::{Pool, Postgres};
-use sqlx_bookstore_assessment::authors::{create_author, get_all_authors, get_author_by_id};
+use sqlx_bookstore_assessment::authors::{
+    create_author, get_all_authors, get_author_by_id, update_author,
+};
 
 #[sqlx::test]
 async fn should_create_author(pool: Pool<Postgres>) -> Result<()> {
@@ -50,6 +52,22 @@ async fn should_get_all_authors(pool: Pool<Postgres>) -> Result<()> {
         assert_eq!(author.author_id, test_authors[index].author_id);
         assert_eq!(author.name, test_authors[index].name);
     }
+
+    Ok(())
+}
+
+#[sqlx::test]
+async fn should_update_author(pool: Pool<Postgres>) -> Result<()> {
+    seeds::run(pool.clone()).await?;
+
+    let mut author = get_author_by_id(&pool, 1).await?;
+    author.name.push('!');
+
+    update_author(&pool, 1, &author.name).await?;
+    let updated_author = get_author_by_id(&pool, author.author_id).await?;
+
+    assert_eq!(author.author_id, updated_author.author_id);
+    assert_eq!(author.name, updated_author.name);
 
     Ok(())
 }

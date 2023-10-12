@@ -1,7 +1,7 @@
 use eyre::Result;
 use sqlx::{Pool, Postgres};
 
-type AuthorId = i32;
+pub type AuthorId = i32;
 
 pub async fn create_author(pool: &Pool<Postgres>, name: &str) -> Result<AuthorId> {
     let result = sqlx::query!(

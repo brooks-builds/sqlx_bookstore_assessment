@@ -5,7 +5,10 @@ use rand::{
 };
 use sqlx::{pool::PoolOptions, ConnectOptions, Pool, Postgres};
 use sqlx_bookstore_assessment::{
-    books::{create_book, delete_book, get_all_books, get_book_by_id, update_book},
+    books::{
+        create_book, create_book_and_author, delete_book, get_all_books, get_book_by_id,
+        update_book,
+    },
     connect,
 };
 
@@ -107,6 +110,42 @@ async fn should_delete_book(pool: Pool<Postgres>) -> Result<()> {
     Ok(())
 }
 
+#[sqlx::test]
+async fn should_create_book_and_author_together(pool: Pool<Postgres>) -> Result<()> {
+    let mut rng = thread_rng();
+    let book_name = Alphanumeric.sample_string(&mut rng, 8);
+    let author_name = Alphanumeric.sample_string(&mut rng, 8);
+
+    let (book_id, author_id) = create_book_and_author(&pool, &book_name, &author_name).await?;
+
+    let db_book_and_author = sqlx::query_as!(
+        TestBookAuthor,
+        r#"
+        SELECT 
+            b.book_id,
+            b.name AS book_name,
+            a.author_id,
+            a.name AS author_name
+        FROM book_authors ba
+        JOIN books b on b.book_id = ba.book_id
+        JOIN authors a on a.author_id = ba.author_id
+        WHERE ba.book_id = $1
+        AND ba.author_id = $2
+    "#,
+        book_id,
+        author_id
+    )
+    .fetch_one(&pool)
+    .await?;
+
+    assert_eq!(book_name, db_book_and_author.book_name);
+    assert_eq!(author_name, db_book_and_author.author_name);
+    assert_eq!(author_id, db_book_and_author.author_id);
+    assert_eq!(book_id, db_book_and_author.book_id);
+
+    Ok(())
+}
+
 fn create_test_books() -> Vec<TestBook> {
     vec![
         TestBook {
@@ -140,4 +179,11 @@ fn create_test_books() -> Vec<TestBook> {
 struct TestBook {
     book_id: i32,
     name: String,
+}
+
+struct TestBookAuthor {
+    book_id: i32,
+    author_id: i32,
+    book_name: String,
+    author_name: String,
 }

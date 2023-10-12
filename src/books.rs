@@ -1,5 +1,7 @@
-use eyre::Result;
+use eyre::{bail, Result};
 use sqlx::{Pool, Postgres};
+
+use crate::authors::AuthorId;
 
 pub type BookId = i32;
 
@@ -46,6 +48,61 @@ pub async fn delete_book(pool: &Pool<Postgres>, book_id: BookId) -> Result<()> {
         .await?;
 
     Ok(())
+}
+
+pub async fn create_book_and_author(
+    pool: &Pool<Postgres>,
+    book_name: &str,
+    author_name: &str,
+) -> Result<(BookId, AuthorId)> {
+    let mut transaction = pool.begin().await?;
+
+    let book_id = match sqlx::query!(
+        "INSERT INTO books (name) VALUES ($1) RETURNING book_id",
+        book_name
+    )
+    .fetch_one(&mut *transaction)
+    .await
+    {
+        Ok(result) => result.book_id,
+        Err(error) => {
+            eprintln!("Error inserting book: {error}");
+            transaction.rollback().await?;
+            bail!("Error inserting book");
+        }
+    };
+
+    let author_id = match sqlx::query!(
+        "INSERT INTO authors (name) VALUES ($1) RETURNING author_id",
+        author_name
+    )
+    .fetch_one(&mut *transaction)
+    .await
+    {
+        Ok(result) => result.author_id,
+        Err(error) => {
+            eprintln!("Error inserting author: {error}");
+            transaction.rollback().await?;
+            bail!("Error inserting author");
+        }
+    };
+
+    if let Err(error) = sqlx::query!(
+        "INSERT INTO book_authors (book_id, author_id) VALUES ($1, $2)",
+        book_id,
+        author_id
+    )
+    .execute(&mut *transaction)
+    .await
+    {
+        eprintln!("Error associating book with author: {error}");
+        transaction.rollback().await?;
+        bail!("Error associating book with author");
+    }
+
+    transaction.commit().await?;
+
+    Ok((book_id, author_id))
 }
 
 pub struct Book {

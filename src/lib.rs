@@ -1,3 +1,4 @@
+pub mod authors;
 pub mod books;
 
 use dotenvy::{dotenv, var};

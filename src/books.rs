@@ -64,5 +64,5 @@ pub struct Book {
 pub struct BookWithAuthors {
     pub book_id: BookId,
     pub name: String,
-    pub authors: Author,
+    pub authors: Vec<Author>,
 }

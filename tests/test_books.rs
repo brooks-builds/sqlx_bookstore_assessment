@@ -236,9 +236,9 @@ fn create_test_books() -> Vec<TestBookWithAuthors> {
     ]
 }
 
-struct TestBook {
-    book_id: i32,
-    name: String,
+pub struct TestBook {
+    pub book_id: i32,
+    pub name: String,
 }
 
 struct TestBookWithAuthors {

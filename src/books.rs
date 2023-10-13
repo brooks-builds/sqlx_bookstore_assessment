@@ -155,7 +155,7 @@ pub struct BookWithAuthors {
     pub authors: Authors,
 }
 
-struct BookAuthor {
+pub struct BookAuthor {
     pub book_id: BookId,
     pub book_name: String,
     pub author_id: AuthorId,

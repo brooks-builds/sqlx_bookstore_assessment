@@ -1,6 +1,9 @@
 use eyre::Result;
 use sqlx::{Pool, Postgres};
 
+/// # Run Seeds
+///
+/// Fill out the run function so that it will seed the database with the data defined in the [README]("../../README.md")
 pub async fn run(pool: Pool<Postgres>) -> Result<()> {
     let mut transaction = pool.begin().await?;
     let mut is_success = true;

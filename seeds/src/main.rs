@@ -1,6 +1,9 @@
 use seeds;
 use sqlx::postgres::PgPoolOptions;
 
+/// # Seeds
+///
+/// Connect to the database and run the seeds function in the `lib.rs` file
 #[tokio::main]
 async fn main() {
     dotenvy::dotenv().expect("Error loading .env");

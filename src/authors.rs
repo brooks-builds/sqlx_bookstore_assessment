@@ -1,7 +1,7 @@
+use crate::books::{Book, BookAuthor, BookId};
 use eyre::{bail, Result};
 use sqlx::{Pool, Postgres};
-
-use crate::books::BookId;
+use std::collections::HashMap;
 
 pub type AuthorId = i32;
 
@@ -107,7 +107,52 @@ pub async fn create_author_and_book(
     Ok((author_id, book_id))
 }
 
+pub type Authors = HashMap<AuthorId, AuthorWithBooks>;
+
+pub async fn get_all_authors_with_books(pool: &Pool<Postgres>) -> Result<Authors> {
+    let book_authors = sqlx::query_as!(
+        BookAuthor,
+        r#"
+            SELECT
+                a.author_id,
+                a.name AS author_name,
+                b.book_id,
+                b.name AS book_name
+            FROM book_authors ba
+            JOIN authors a ON a.author_id = ba.author_id
+            JOIN books b ON b.book_id = ba.book_id
+        "#
+    )
+    .fetch_all(pool)
+    .await?;
+
+    let mut authors = Authors::new();
+
+    for book_author in book_authors {
+        let author = authors
+            .entry(book_author.author_id)
+            .or_insert(AuthorWithBooks {
+                author_id: book_author.author_id,
+                name: book_author.author_name,
+                books: vec![],
+            });
+
+        author.books.push(Book {
+            book_id: book_author.book_id,
+            name: book_author.book_name,
+        });
+    }
+
+    Ok(authors)
+}
+
 pub struct Author {
     pub author_id: AuthorId,
     pub name: String,
+}
+
+pub struct AuthorWithBooks {
+    pub author_id: AuthorId,
+    pub name: String,
+    pub books: Vec<Book>,
 }

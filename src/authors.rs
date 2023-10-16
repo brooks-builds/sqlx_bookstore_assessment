@@ -6,8 +6,15 @@ use std::collections::HashMap;
 pub type AuthorId = i32;
 
 /// Insert an author into the database and return the newly created author id
-pub async fn create_author(_pool: &Pool<Postgres>, _name: &str) -> Result<AuthorId> {
-    todo!()
+pub async fn create_author(pool: &Pool<Postgres>, name: &str) -> Result<AuthorId> {
+    let result = sqlx::query!(
+        "INSERT INTO authors (name) VALUES ($1) RETURNING author_id",
+        name
+    )
+    .fetch_one(pool)
+    .await?;
+
+    Ok(result.author_id)
 }
 
 /// Retrieve a single author from the database and return it. We don't care about their books yet so this will just be an object that has the author id and the name.

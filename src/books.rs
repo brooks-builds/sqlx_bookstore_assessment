@@ -1,7 +1,7 @@
-use crate::authors::{create_author, Author, AuthorId};
-use eyre::{bail, Result};
+use crate::authors::{Author, AuthorId};
+use eyre::Result;
 use sqlx::{Pool, Postgres};
-use std::collections::HashMap;
+use std::{collections::HashMap, vec};
 
 /// Id for the books in the database
 pub type BookId = i32;
@@ -119,8 +119,39 @@ pub type Books = HashMap<BookId, BookWithAuthors>;
 /// Retrieve all books in the database with their authors and return using the Books type above.
 ///
 /// Use a single operation to the database to get all of the data you need
-pub async fn get_all_books_with_authors(_pool: &Pool<Postgres>) -> Result<Books> {
-    todo!()
+pub async fn get_all_books_with_authors(pool: &Pool<Postgres>) -> Result<Books> {
+    let book_authors = sqlx::query!(
+        r#"
+        SELECT
+            b.book_id,
+            b.name AS book_name,
+            a.author_id,
+            a.name AS author_name
+        FROM books b
+        JOIN book_authors ba ON ba.book_id = b.book_id
+        JOIN authors a ON a.author_id = ba.author_id
+    "#
+    )
+    .fetch_all(pool)
+    .await?;
+
+    let mut books = Books::new();
+
+    for book_author in book_authors {
+        let book = books.entry(book_author.book_id).or_insert(BookWithAuthors {
+            authors: vec![],
+            book_id: book_author.book_id,
+            name: book_author.book_name,
+        });
+        let author = Author {
+            author_id: book_author.author_id,
+            name: book_author.author_name,
+        };
+
+        book.authors.push(author);
+    }
+
+    Ok(books)
 }
 
 /// This struct models just the books table. Use this struct when we don't care about the authors of the books
